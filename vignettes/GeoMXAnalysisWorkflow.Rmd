@@ -47,7 +47,8 @@ keywords: DifferentialExpression, Normalization, QualityControl, Spatial, Transc
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 #load packages to avoid startup messages later in the code
-library(standR)
+# devtools::install_github("DavisLaboratory/standR")
+library(standR) 
 library(SpatialExperiment)
 library(limma)
 library(edgeR)
@@ -106,7 +107,7 @@ This dataset includes data on **five slides**. The ROI selection strategy employ
 
 
 ```{r echo=TRUE, eval=FALSE}
-setwd("~/vignettes/")
+# setwd("~/vignettes/")
 ```
 
 
