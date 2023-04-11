@@ -119,75 +119,20 @@ sampleAnnoFile <- read_tsv("../inst/extdata/metadata.txt") %>% as.data.frame()
 featureAnnoFile <- read_tsv("../inst/extdata/genemeta.txt") %>% as.data.frame()
 ```
 
-We can have a first look at the format of the three files, which are the typical files made available by NanoString.
-
-The `countFile` is a tab-delimited file, it contains the count table (features by samples) we generally see in transcriptomics analysis. By default as provided by the Nanostring, it is required to have the gene name column with the column name of "TargetName".
-
-```{r}
-head(countFile)[,1:5]
-```
-
-
-The `sampleAnnoFile` is a tab-delimited file, containing all the annotation (metadata) for the samples. By default as provided by the Nanostring, it is required to include the sample name column with the column name of "SegmentDisplayName".
-
-```{r}
-head(sampleAnnoFile)[,1:5]
-```
-
-
-The `featureAnnoFile` is a tab-delimited file, containing all the annotation (metadata) of the genes in the dataset. By default as provided by the Nanostring, it is required to include the gene name column with the column name of "TargetName".
-
-```{r}
-head(featureAnnoFile)[,1:5]
-```
-
-
-As described in the introduction, there are many advantages to use a mature infrastructure throughout the analysis, such as compatibility with other tools.
-
-Therefore, the first step in the `standR` package workflow is to construct a `SpatialExperiment` object that includes all the information available in the data. Here we can use the function `readGeoMX` to do so. For more information about the `SpatialExperiment` infrastructure, see [here](http://www.bioconductor.org/packages/release/bioc/html/SpatialExperiment.html).
-
-**Note 1: By default, the `readGeoMx` function will look for the gene name column in both the `countFile` and `featureAnnoFile` with the column name of "TargetName", and the sample name column in the `sampleAnnoFile` with the column name of "SegmentDisplayName", these column names are given by the Nanostring in the default settings, if your data have been modified, you can indicate the corresponding column names by specifying the parameter "colnames.as.rownames" in the `readGeoMx` function when loading the data.**
-
-**Note 2: If you plan to use `readGeoMx` to construct the `SpatialExperiment` object with your own data, make sure that the files you use as inputs are tab-delimited files.**
+Construct a SPE
 
 ```{r message=FALSE}
 library(standR)
 
-spe <- readGeoMx(countFile, sampleAnnoFile, featureAnnoFile)
+spe <- readGeoMx(countFile, sampleAnnoFile, featureAnnoFile) # 18676 190
 ```
 
-
-```{r}
-spe <- readGeoMx("../inst/extdata/count.txt",
-                 "../inst/extdata/metadata.txt",
-                 "../inst/extdata/genemeta.txt")
-```
-
-
-Check the basic information about the dataset by entering the object name directly. 
-We see that the data has measurements for approximately 18676 genes and 190 ROIs.
-
-```{r}
-spe
-```
-
-Both count-level data and logCPM measurements are stored in the `spatialExperiment` object. Specifically, the raw count data is stored in the `counts` assay slot, while the log-CPM (count per million) of the data is calculated by default with the `readGeoMX` function and stored in the `logcounts` assay of the object.
+The log-CPM (count per million) of the data is calculated by default with the `readGeoMX` function and stored in the `logcounts` assay of the object.
 
 ```{r}
 library(SpatialExperiment)
 
 assayNames(spe)
-```
-
-We can have a look at the count table by using the `assay` function and specify the table name.
-
-```{r}
-assay(spe, "counts")[1:5,1:5]
-```
-
-
-```{r}
-assay(spe, "logcounts")[1:5,1:5]
 ```
 
 Sample metadata is stored in the `colData` of the object.
@@ -209,19 +154,6 @@ By default, the `readGeoMx` function will remove the negative probe, the entry w
 metadata(spe)$NegProbes[,1:5]
 ```
 
-
-
-## Import from DGEList object
-
-Alternatively, `standR` provides a function to generate a spatial experiment object from a DGEList object, which would be useful for users who used `edgeR` package and have existing analyses and implementations using DGEList objects to port across to the standR workflow.
-
-```{r}
-dge <- edgeR::SE2DGEList(spe)
-
-spe2 <- readGeoMxFromDGE(dge)
-
-spe2
-```
 
 ## Check QCFlags
 
@@ -285,8 +217,6 @@ Looking at the object again, we can see that no genes were removed.
 The count matrix of the genes that were removed will be stored in the `metadata` of the object with prefix *genes_rm*, alongside the calculated expression threshold (*lcpm_threshold*).
 
 ```{r}
-dim(spe)
-
 metadata(spe) |> names()
 ```
 
@@ -296,13 +226,15 @@ Using the `plotGeneQC` function, we can then assess the logCPM expressions of th
 Moreover, users can order the samples (using parameter `ordannots`) or color/shape the dots by specific annotation to better compare and assess for specific biological or experimental factors which are influencing how these genes were expressed across the samples (e.g. gene may be highly expressed in particular tissue types or under particular treatment conditions. These genes are to be access or curated by domain experts to ascertain or determine if any of these genes are of biological/experimental significance. This provides a potential warning to whether the experiments have worked as per intended. 
 
 ```{r fig.width=6, fig.height=5}
-plotGeneQC(spe, ordannots = "regions", col = regions, point_size = 2)
+#plotGeneQC(spe, ordannots = "regions", col = regions, point_size = 2)
+plotGeneQC(spe) # same thing as above
 ```
 
 
 ```{r fig.width=10, fig.height=7}
 data("dkd_spe_subset")
 dkd_spe_subset <- addPerROIQC(dkd_spe_subset)
+# dkd_spe_subset <- addPerROIQC(dkd_spe_subset, rm_genes = TRUE) # default rm_genes is already TRUE
 plotGeneQC(dkd_spe_subset)
 ```
 
